@@ -17,6 +17,9 @@ public interface ByUdpI {
     SendObject pullSendObject();
     void pushSendObject(SendObject sendObject);
 
+    SendObject pullSendPackets();
+    void pushSendPackets(SendObject sendObject);
+
     void  pushReplayControl(ReplyControl value);
     int checkReplayControl(SendObjectInfo key);
     void sendNeedPackates(SendObjectInfo key);
@@ -29,4 +32,6 @@ public interface ByUdpI {
     boolean ifReceived(BasePacket basePacket);//cache received and judge if received
     SendObject receiveData(BasePacket basePacket);
     SendObject getReceivedObject(SendObjectInfo info);
+
+
 }

@@ -70,7 +70,7 @@ public class PacketUtil {
     public static BasePacket grReceivedAll(InetSocketAddress address,SendObjectInfo info){
         info.setPacketInfos(null);
         byte[] data = SendObjectInfoUtil.toBytes(info);
-        BasePacketData packetData = new BasePacketData(ByFactory.getByUdp().clientID(),getId(),1,0,new Date(),DataType.ReveiveAll,data);
+        BasePacketData packetData = new BasePacketData(ByFactory.getByUdp().clientID(),getId(),1,0,new Date(),DataType.Copy,data);
         return new BasePacket(address,packetData);
     }
     public static BasePacket grNeedPackets(InetSocketAddress address,SendObjectInfo info){

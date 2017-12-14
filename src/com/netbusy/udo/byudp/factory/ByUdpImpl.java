@@ -3,6 +3,7 @@ package com.netbusy.udo.byudp.factory;
 import com.netbusy.log.ByLog;
 import com.netbusy.udo.byudp.entity.*;
 import com.netbusy.udo.byudp.worker.ObjectSender;
+import com.netbusy.udo.byudp.worker.PacketsReSender;
 import com.netbusy.udo.byudp.worker.Receiver;
 import com.netbusy.util.threadutil.ThreadUtil;
 
@@ -17,6 +18,8 @@ public class ByUdpImpl implements ByUdpI{
 
     private HashMap<String,Object> params = new HashMap<String, Object>();
     private ArrayList<SendObject> sendObjects = new ArrayList<SendObject>();
+    private ArrayList<SendObject> sendPackets = new ArrayList<SendObject>();
+
     private HashMap<SendObjectInfo,ReplyControl> replyConytols = new HashMap<SendObjectInfo, ReplyControl>();
 
 
@@ -49,14 +52,17 @@ public class ByUdpImpl implements ByUdpI{
 
         Object receiveControl = new Date();
         Object senderObjectControl = new Date();
+        Object sendPacketsConytol = new Date();
         Object replyConytol = new Date();
 
         setParam("receiveControl",receiveControl);
         setParam("senderObjectControl",senderObjectControl);
+        setParam("sendPacketsConytol",replyConytol);
         setParam("replyConytol",replyConytol);
 
         ThreadUtil.CreatThread(new Receiver(getParam("receiveControl"),this)).start();
         ThreadUtil.CreatThread(new ObjectSender(getParam("senderObjectControl"),this)).start();
+        ThreadUtil.CreatThread(new PacketsReSender(getParam("sendPacketsConytol"),this)).start();
     }
 
     @Override
@@ -101,6 +107,26 @@ public class ByUdpImpl implements ByUdpI{
         Object control = getParam("senderObjectControl");
         synchronized (control){
             sendObjects.add(sendObject);
+            control.notify();
+        }
+    }
+
+    @Override
+    public SendObject pullSendPackets() {
+        SendObject sendObject = null;
+        synchronized (getParam("sendPacketsConytol")){
+            if(!sendPackets.isEmpty()) {
+                sendObject = sendPackets.remove(0);
+            }
+        }
+        return sendObject;
+    }
+
+    @Override
+    public void pushSendPackets(SendObject sendObject) {
+        Object control = getParam("sendPacketsConytol");
+        synchronized (control){
+            sendPackets.add(sendObject);
             control.notify();
         }
     }

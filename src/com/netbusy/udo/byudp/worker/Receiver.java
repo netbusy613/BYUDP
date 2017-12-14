@@ -48,9 +48,6 @@ public class Receiver implements Runnable{
                         case DataType.NeedPacket:
                             receivedNeedPackets(basePacket);
                             break;
-                        case DataType.ReveiveAll:
-                            receivedReceivedAll(basePacket);
-                            break;
                         case DataType.Copy:
                             break;
                     }
@@ -112,6 +109,12 @@ public class Receiver implements Runnable{
 
     }
 
+    private void doCopy(BasePacket basePacket){
+        SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
+        ByLog.log("do Copy!");
+        byUdpI.setAndNofifyReplayControl(key,PacketStatu.OVER);
+    }
+
     private void receivedReceivedAll(BasePacket basePacket){
         SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
         ByLog.log("do receivedALLPackets!");
@@ -121,7 +124,7 @@ public class Receiver implements Runnable{
     private void receivedNeedPackets(BasePacket basePacket){
         ByLog.log("do receivedNeedPackets");
         SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
-        byUdpI.setAndNofifyReplayControl(key,PacketStatu.NEED);
+        //byUdpI.setAndNofifyReplayControl(key,PacketStatu.NEED);
     }
 
     private boolean checkSendOver(BasePacketInfo[] infos){

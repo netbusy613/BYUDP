@@ -101,10 +101,6 @@ public class ObjectSender implements Runnable{
             byUdpI.releaseReplyControl(sendObject.getInfo());
             ByLog.log("Send OVER");
             return true;
-        }else if(ifok==PacketStatu.NEED) {
-            sendNeedPackets(sendObject,replyControl);
-            ByLog.log("NEED PACKET");
-            return true;
         }else if(ifok==PacketStatu.WAIT){
             ByLog.log("Send ERROR time="+i);
             return false;
