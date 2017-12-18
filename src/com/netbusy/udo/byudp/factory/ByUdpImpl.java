@@ -21,7 +21,7 @@ public class ByUdpImpl implements ByUdpI{
     private ArrayList<SendObject> sendObjects = new ArrayList<SendObject>();
     private ArrayList<BasePacket> cmdList = new ArrayList<BasePacket>();
 
-    private HashMap<BasePacketInfo,ReplyControl> replyConytols = new HashMap<BasePacketInfo, ReplyControl>();
+    private HashMap<BasePacketInfo,ReplyControl> replyControls = new HashMap<BasePacketInfo, ReplyControl>();
 
 
     private HashMap<SendObjectInfo,SendObject> sendcache = new HashMap<SendObjectInfo,SendObject>();
@@ -154,14 +154,14 @@ public class ByUdpImpl implements ByUdpI{
     @Override
     public void pushReplayControl( ReplyControl value) {
         synchronized (getParam("replyControl")) {
-            replyConytols.put(value.getInfo(), value);
+            replyControls.put(value.getInfo(), value);
         }
     }
 
     @Override
     public boolean checkReplayControl(BasePacketInfo key) {
         synchronized (getParam("replyControl")) {
-            ReplyControl control = replyConytols.get(key);
+            ReplyControl control = replyControls.get(key);
             if(control!=null){
                 if(control.isSendOver()){
                     return true;
@@ -171,21 +171,21 @@ public class ByUdpImpl implements ByUdpI{
         }
     }
 
-    private void sendPacket(BasePacket basePacket){
-        try {
-            socket.send(basePacket.getDatagramPacket());
-            BasePacketInfo packet = basePacket.getInfo();
-            ByLog.log("send need packets [id:" + packet.getId() + "] [tot:" + packet.getTot() + "] [num:" + packet.getNum() + "]");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    private void sendPacket(BasePacket basePacket){
+//        try {
+//            socket.send(basePacket.getDatagramPacket());
+//            BasePacketInfo packet = basePacket.getInfo();
+//            ByLog.log("send packets [id:" + packet.getId() + "] [tot:" + packet.getTot() + "] [num:" + packet.getNum() + "]");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 
     @Override
     public void setAndNofifyReplayControl(BasePacketInfo info,boolean sendOver) {
-        synchronized (getParam("replyConytol")) {
-            ReplyControl control = replyConytols.get(info);
+        synchronized (getParam("replyContol")) {
+            ReplyControl control = replyControls.get(info);
             if(control!=null){
                 control.setSendOver(true);
                 synchronized (control.getControl()) {
@@ -198,8 +198,8 @@ public class ByUdpImpl implements ByUdpI{
 
     @Override
     public void releaseReplyControl(BasePacketInfo key) {
-        synchronized (getParam("replyConytol")) {
-            ReplyControl control = replyConytols.remove(key);
+        synchronized (getParam("replyContol")) {
+            ReplyControl control = replyControls.remove(key);
         }
     }
 
