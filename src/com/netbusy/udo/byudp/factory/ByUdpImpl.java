@@ -184,7 +184,7 @@ public class ByUdpImpl implements ByUdpI{
 
     @Override
     public void setAndNofifyReplayControl(BasePacketInfo info,boolean sendOver) {
-        synchronized (getParam("replyContol")) {
+        synchronized (getParam("replyControl")) {
             ReplyControl control = replyControls.get(info);
             if(control!=null){
                 control.setSendOver(true);
@@ -198,7 +198,7 @@ public class ByUdpImpl implements ByUdpI{
 
     @Override
     public void releaseReplyControl(BasePacketInfo key) {
-        synchronized (getParam("replyContol")) {
+        synchronized (getParam("replyControl")) {
             ReplyControl control = replyControls.remove(key);
         }
     }
