@@ -52,19 +52,20 @@ public class CmdProcessor implements Runnable{
     private void doSendOver(BasePacket basePacket){
         SendObjectInfo sendObjectInfo= SendObjectInfoUtil.toObject(basePacket.getBasePacketData());
         SendObject sendObject = byUdpI.getReceivedObject(sendObjectInfo);
+        BasePacket cmdpacket = null;
         if(sendObject==null){
+            cmdpacket = PacketUtil.grNeedPackets(basePacket.getAddress(),sendObject.getInfo());
             ByLog.err("doSendOver Error do Not find Obj id="+sendObjectInfo.getId());
             return;
         }else {
-            BasePacket cmdpacket = null;
             if(checkOver(sendObject.getInfo().getPacketStatus())){
                 cmdpacket = PacketUtil.grReceivedAll(basePacket.getAddress(),sendObjectInfo);
             }else {
                 cmdpacket = PacketUtil.grNeedPackets(basePacket.getAddress(),sendObject.getInfo());
             }
-            if(cmdpacket!=null) {
-                byUdpI.sendCmd(cmdpacket);
-            }
+        }
+        if(cmdpacket!=null) {
+            byUdpI.sendCmd(cmdpacket);
         }
     }
 
