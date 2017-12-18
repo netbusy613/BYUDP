@@ -85,7 +85,7 @@ public class Receiver implements Runnable{
 
 
     private void doCopy(BasePacket basePacket){
-        ByLog.err("do Copy! len"+basePacket.getBasePacketData().length);
+        ByLog.err("do Copy! len"+basePacket.getBasePacketData().length+ "  info="+basePacket.getInfo());
         BasePacketInfo key = BasePacketInfoUtil.toObject(basePacket.getBasePacketData());
         ByLog.log("do Copy! "+basePacket.getInfo());
         byUdpI.setAndNofifyReplayControl(key,true);
