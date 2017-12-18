@@ -85,6 +85,7 @@ public class Receiver implements Runnable{
 
 
     private void doCopy(BasePacket basePacket){
+        ByLog.err("do Copy! len"+basePacket.getBasePacketData().length);
         BasePacketInfo key = BasePacketInfoUtil.toObject(basePacket.getBasePacketData());
         ByLog.log("do Copy! "+basePacket.getInfo());
         byUdpI.setAndNofifyReplayControl(key,true);
@@ -93,7 +94,7 @@ public class Receiver implements Runnable{
         BasePacket copy = PacketUtil.grCopy(basePacket);
         try {
             byUdpI.getSocket().send(copy.getDatagramPacket());
-            ByLog.log("send Copy! "+basePacket.getInfo());
+            ByLog.log("send Copy! "+copy.getInfo());
         } catch (IOException e) {
             e.printStackTrace();
         }
