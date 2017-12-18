@@ -1,15 +1,14 @@
 package com.netbusy.udo.byudp.worker;
 
 import com.netbusy.log.ByLog;
-import com.netbusy.udo.byudp.entity.*;
+import com.netbusy.udo.byudp.entity.BasePacket;
+import com.netbusy.udo.byudp.entity.DataType;
+import com.netbusy.udo.byudp.entity.SendObject;
+import com.netbusy.udo.byudp.entity.SendObjectInfo;
 import com.netbusy.udo.byudp.factory.ByUdpI;
-import com.netbusy.udo.byudp.statics.Statics;
 import com.netbusy.udo.byudp.util.PacketUtil;
 import com.netbusy.udo.byudp.util.SendObjectInfoUtil;
 import com.netbusy.util.threadutil.ThreadUtil;
-
-import java.io.IOException;
-import java.util.Date;
 
 public class CmdProcessor implements Runnable{
 
@@ -74,12 +73,13 @@ public class CmdProcessor implements Runnable{
         SendObject sendObject = byUdpI.findSendCache(sendObjectInfo);
         sendObject.setInfo(sendObjectInfo);
         byUdpI.pushSendObject(sendObject);
+        ByLog.err("doNeedPackets "+sendObjectInfo);
     }
 
     private void doReceivedAll(BasePacket basePacket){
         SendObjectInfo sendObjectInfo = SendObjectInfoUtil.toObject(basePacket.getBasePacketData());
         byUdpI.cleanSendCache(sendObjectInfo);
-
+        ByLog.err("doReceivedAll "+sendObjectInfo);
     }
 
     private boolean checkOver(boolean[] packStatus){
