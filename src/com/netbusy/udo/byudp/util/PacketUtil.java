@@ -78,7 +78,7 @@ public class PacketUtil {
     public static BasePacket grReceivedAll(InetSocketAddress address,SendObjectInfo info){
         info.setPacketStatus(null);
         byte[] data = SendObjectInfoUtil.toBytes(info);
-        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.Copy);
+        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.ReceivedAll);
         return new BasePacket(address,data,basePacketInfo);
     }
     public static BasePacket grNeedPackets(InetSocketAddress address,SendObjectInfo info){
