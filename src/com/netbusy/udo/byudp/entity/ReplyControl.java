@@ -4,16 +4,16 @@ import java.io.Serializable;
 
 public class ReplyControl implements Serializable{
     private Object control;
-    private SendObjectInfo sendObjectInfo;
-    private int sendOver;
+    private BasePacketInfo info;
+    private boolean sendOver;
 
     public ReplyControl() {
     }
 
-    public ReplyControl(SendObjectInfo sendObjectInfo, Object control, int sendOver) {
+    public ReplyControl(BasePacketInfo info, Object control) {
         this.control = control;
-        this.sendObjectInfo = sendObjectInfo;
-        this.sendOver = sendOver;
+        this.info = info;
+        this.sendOver = false;
     }
 
     public Object getControl() {
@@ -24,19 +24,19 @@ public class ReplyControl implements Serializable{
         this.control = control;
     }
 
-    public int getSendOver() {
+    public boolean isSendOver() {
         return sendOver;
     }
 
-    public void setSendOver(int sendOver) {
+    public void setSendOver(boolean sendOver) {
         this.sendOver = sendOver;
     }
 
-    public SendObjectInfo getSendObjectInfo() {
-        return sendObjectInfo;
+    public BasePacketInfo getInfo() {
+        return info;
     }
 
-    public void setSendObjectInfo(SendObjectInfo sendObjectInfo) {
-        this.sendObjectInfo = sendObjectInfo;
+    public void setInfo(BasePacketInfo info) {
+        this.info = info;
     }
 }

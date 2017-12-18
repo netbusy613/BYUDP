@@ -3,6 +3,7 @@ package com.netbusy.udo.byudp.entity;
 import com.netbusy.coder.CoderFactory;
 import com.netbusy.coder.CoderI;
 import com.netbusy.udo.byudp.exception.CRC32CheckException;
+import com.netbusy.udo.byudp.factory.ByFactory;
 import com.netbusy.udo.byudp.util.BasePacketInfoUtil;
 import com.netbusy.util.datautil.DTC;
 import java.net.DatagramPacket;
@@ -34,17 +35,17 @@ public class BasePacket{
         byte[] infobytes = (byte[]) DTC.B2OCopy(data,0,64,byte[].class);
         byte [] reldata =  (byte[]) DTC.B2OCopy(data,64,data.length-64,byte[].class);
         this.info = BasePacketInfoUtil.toObject(infobytes);
-        this.basePacketData = new BasePacketData(info,reldata);
+        this.basePacketData = reldata;
 
     }
-    public BasePacket(InetSocketAddress address, BasePacketData basePacketData) {
+    public BasePacket(InetSocketAddress address, byte[] basePacketData,BasePacketInfo info){
         this.address = address;
         this.basePacketData = basePacketData;
-        this.info = getInfo();
+        this.info = info;
         byte [] infodata = BasePacketInfoUtil.toBytes(this.info);
-        byte[] senddata = new byte[infodata.length+basePacketData.getData().length];
+        byte[] senddata = new byte[infodata.length+basePacketData.length];
         int pos = DTC.O2BCopy(senddata,0,infodata);
-        DTC.O2BCopy(senddata,pos,basePacketData.getData());
+        DTC.O2BCopy(senddata,pos,basePacketData);
 
         CoderI coderI = CoderFactory.getCoderI();
         int code = (Integer) coderI.grKey();
@@ -63,12 +64,38 @@ public class BasePacket{
 
         this.datagramPacket = new DatagramPacket(data,data.length,address.getAddress(),address.getPort());
     }
+    public BasePacket(InetSocketAddress address, byte[] basePacketData,long id,int tot, int num, int type) {
+        this.address = address;
+        this.basePacketData = basePacketData;
+        this.info = new BasePacketInfo(ByFactory.getByUdp().clientID(),id,tot,num,type);
+        byte [] infodata = BasePacketInfoUtil.toBytes(this.info);
+        byte[] senddata = new byte[infodata.length+basePacketData.length];
+        int pos = DTC.O2BCopy(senddata,0,infodata);
+        DTC.O2BCopy(senddata,pos,basePacketData);
+
+        CoderI coderI = CoderFactory.getCoderI();
+        int code = (Integer) coderI.grKey();
+        senddata = coderI.encoding(code,senddata);
+
+        byte [] data = new byte[senddata.length+12];
+
+        int destPos = 8;
+        destPos = DTC.O2BCopy(data,destPos,code);
+        DTC.O2BCopy(data,destPos,senddata);
+
+        CRC32 crc32 = new CRC32();
+        crc32.update(data,8,senddata.length+4);
+        this.crc32 = crc32.getValue();
+        DTC.O2BCopy(data,0,this.crc32);
+
+        this.datagramPacket = new DatagramPacket(data,data.length,address.getAddress(),address.getPort());
+    }
+
     private InetSocketAddress address;
     private long crc32;
-    private BasePacketData basePacketData;
+    private byte[] basePacketData;
     private DatagramPacket datagramPacket;
     private BasePacketInfo info;
-    private String uuid;
 
     public InetSocketAddress getAddress() {
         return address;
@@ -78,7 +105,7 @@ public class BasePacket{
         return crc32;
     }
 
-    public BasePacketData getBasePacketData() {
+    public byte[] getBasePacketData() {
         return basePacketData;
     }
 
@@ -87,9 +114,6 @@ public class BasePacket{
     }
 
     public BasePacketInfo getInfo(){
-        if (info==null){
-            info = new BasePacketInfo(this.basePacketData);
-        }
         return info;
     }
 

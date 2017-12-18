@@ -35,7 +35,7 @@ public class ObjectSender implements Runnable{
                 sendOver(sendObject);
             }else {
                 ByLog.log("No Object to send.");
-                ThreadUtil.waits(1000,control);
+                ThreadUtil.waits(control);
             }
         }
         ByLog.log("ObjectSender daed!.......");
@@ -43,11 +43,14 @@ public class ObjectSender implements Runnable{
 
     private void sendObject(SendObject sendObject){
         BasePacket[] packets = sendObject.getPackets();
+        boolean[] packetstatus = sendObject.getInfo().getPacketStatus();
         try {
-            for (BasePacket basePacket : packets) {
-                byUdpI.getSocket().send(basePacket.getDatagramPacket());
-                BasePacketData packet = basePacket.getBasePacketData();
-                ByLog.log("ObjectSender a packet![id:" + packet.getId() + "] [tot:" + packet.getTot() + "] [num:" + packet.getNum() + "]");
+            for(int i=0;i<packets.length;i++){
+                if(!packetstatus[i]){
+                    byUdpI.getSocket().send(packets[i].getDatagramPacket());
+                    BasePacketInfo info = packets[i].getInfo();
+                    ByLog.log("ObjectSender a packet![id:" + info.getId() + "] [tot:" + info.getTot() + "] [num:" + info.getNum() + "]");
+                }
             }
             byUdpI.cacheSendObjects(sendObject);
         } catch (IOException ex) {
@@ -56,55 +59,9 @@ public class ObjectSender implements Runnable{
     }
 
     private void sendOver(SendObject sendObject){
-        try {
-            Object recontrol = new Date();
-            ReplyControl replyControl = new ReplyControl(sendObject.getInfo(),recontrol,PacketStatu.WAIT);
-            byUdpI.pushReplayControl(replyControl);
-            ByLog.log("pushReplayControl id="+replyControl.getSendObjectInfo().getId());
-            BasePacket bp = PacketUtil.grSendOver(sendObject.getAddress(),sendObject.getInfo());
-            for (int i=0;i<10;i++){
-                byUdpI.getSocket().send(bp.getDatagramPacket());
-                ByLog.log("Sender a sendOver packet! "+i+" times! id="+bp.getInfo().getId());
-                ThreadUtil.waits(Statics.TimeSep,recontrol);
-                if(checkSendPacketStatu(sendObject,replyControl,i)){
-                    return;
-                }
-            }
-            ByLog.err("SendObject ERROR, [id="+sendObject.getPackets()[0].getBasePacketData().getId()+"] [type="+sendObject.getType()+"]");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Object recontrol = new Date();
+        BasePacket bp = PacketUtil.grSendOver(sendObject.getAddress(),sendObject.getInfo());
+        byUdpI.sendCmd(bp);
     }
 
-    private void sendNeedPackets(SendObject sendObject,ReplyControl replyControl){
-        byUdpI.sendNeedPackates(replyControl.getSendObjectInfo());
-        BasePacket bp = PacketUtil.grSendOver(sendObject.getAddress(), sendObject.getInfo());
-        int ifok = PacketStatu.UNKNOW;
-        for(int i= 0;i<10;i++) {
-            try {
-                byUdpI.getSocket().send(bp.getDatagramPacket());
-                ByLog.log("Sender a ResendOver packet! " + i + " times!");
-                ThreadUtil.waits(Statics.TimeSep, replyControl.getControl());
-                if(checkSendPacketStatu(sendObject,replyControl,i)){
-                    return;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-    public boolean checkSendPacketStatu(SendObject sendObject,ReplyControl replyControl,int i){
-        int ifok = byUdpI.checkReplayControl(replyControl.getSendObjectInfo());
-        if(ifok==PacketStatu.OVER){
-            byUdpI.releaseSendCachePacks(sendObject.getInfo());
-            byUdpI.releaseReplyControl(sendObject.getInfo());
-            ByLog.log("Send OVER");
-            return true;
-        }else if(ifok==PacketStatu.WAIT){
-            ByLog.log("Send ERROR time="+i);
-            return false;
-        }
-        return false;
-    }
 }

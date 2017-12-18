@@ -2,8 +2,9 @@ package com.netbusy.udo.byudp.factory;
 
 import com.netbusy.log.ByLog;
 import com.netbusy.udo.byudp.entity.*;
+import com.netbusy.udo.byudp.statics.Statics;
+import com.netbusy.udo.byudp.worker.CmdProcessor;
 import com.netbusy.udo.byudp.worker.ObjectSender;
-import com.netbusy.udo.byudp.worker.PacketsReSender;
 import com.netbusy.udo.byudp.worker.Receiver;
 import com.netbusy.util.threadutil.ThreadUtil;
 
@@ -18,9 +19,9 @@ public class ByUdpImpl implements ByUdpI{
 
     private HashMap<String,Object> params = new HashMap<String, Object>();
     private ArrayList<SendObject> sendObjects = new ArrayList<SendObject>();
-    private ArrayList<SendObject> sendPackets = new ArrayList<SendObject>();
+    private ArrayList<BasePacket> cmdList = new ArrayList<BasePacket>();
 
-    private HashMap<SendObjectInfo,ReplyControl> replyConytols = new HashMap<SendObjectInfo, ReplyControl>();
+    private HashMap<BasePacketInfo,ReplyControl> replyConytols = new HashMap<BasePacketInfo, ReplyControl>();
 
 
     private HashMap<SendObjectInfo,SendObject> sendcache = new HashMap<SendObjectInfo,SendObject>();
@@ -52,17 +53,19 @@ public class ByUdpImpl implements ByUdpI{
 
         Object receiveControl = new Date();
         Object senderObjectControl = new Date();
-        Object sendPacketsConytol = new Date();
-        Object replyConytol = new Date();
+        Object cmdControl = new Date();
+        Object sendCacheControl = new Date();
+        Object replyControl = new Date();
 
         setParam("receiveControl",receiveControl);
         setParam("senderObjectControl",senderObjectControl);
-        setParam("sendPacketsConytol",replyConytol);
-        setParam("replyConytol",replyConytol);
+        setParam("cmdControl",cmdControl);
+        setParam("sendCacheControl",sendCacheControl);
+        setParam("replyControl",replyControl);
 
         ThreadUtil.CreatThread(new Receiver(getParam("receiveControl"),this)).start();
         ThreadUtil.CreatThread(new ObjectSender(getParam("senderObjectControl"),this)).start();
-        ThreadUtil.CreatThread(new PacketsReSender(getParam("sendPacketsConytol"),this)).start();
+        ThreadUtil.CreatThread(new CmdProcessor(getParam("cmdControl"),this)).start();
     }
 
     @Override
@@ -84,10 +87,26 @@ public class ByUdpImpl implements ByUdpI{
 
     @Override
     public void cacheSendObjects(SendObject sendObject) {
-        Object control = getParam("senderObjectControl");
+        Object control = getParam("sendCacheControl");
         synchronized (control){
             ByLog.log("cache send OBJ num="+sendObject.getPackets().length);
             sendcache.put(sendObject.getInfo(),sendObject);
+        }
+    }
+
+    @Override
+    public SendObject findSendCache(SendObjectInfo sendObjectInfo) {
+        Object control = getParam("sendCacheControl");
+        synchronized (control){
+            return sendcache.get(sendObjectInfo);
+        }
+    }
+
+    @Override
+    public void cleanSendCache(SendObjectInfo sendObjectInfo) {
+        Object control = getParam("sendCacheControl");
+        synchronized (control){
+            sendcache.remove(sendObjectInfo);
         }
     }
 
@@ -112,44 +131,43 @@ public class ByUdpImpl implements ByUdpI{
     }
 
     @Override
-    public SendObject pullSendPackets() {
-        SendObject sendObject = null;
-        synchronized (getParam("sendPacketsConytol")){
-            if(!sendPackets.isEmpty()) {
-                sendObject = sendPackets.remove(0);
+    public BasePacket pullCmd() {
+        BasePacket basePacket = null;
+        synchronized (getParam("cmdControl")){
+            if(!cmdList.isEmpty()) {
+                basePacket = cmdList.remove(0);
             }
         }
-        return sendObject;
+        return basePacket;
     }
 
     @Override
-    public void pushSendPackets(SendObject sendObject) {
-        Object control = getParam("sendPacketsConytol");
+    public void pushCmd(BasePacket basePacket) {
+        Object control = getParam("cmdControl");
         synchronized (control){
-            sendPackets.add(sendObject);
+            cmdList.add(basePacket);
             control.notify();
         }
     }
 
+
     @Override
     public void pushReplayControl( ReplyControl value) {
-        synchronized (getParam("replyConytol")) {
-            replyConytols.put(value.getSendObjectInfo(), value);
+        synchronized (getParam("replyControl")) {
+            replyConytols.put(value.getInfo(), value);
         }
     }
 
     @Override
-    public int checkReplayControl(SendObjectInfo key) {
-        synchronized (getParam("replyConytol")) {
+    public boolean checkReplayControl(BasePacketInfo key) {
+        synchronized (getParam("replyControl")) {
             ReplyControl control = replyConytols.get(key);
             if(control!=null){
-                if(control.getSendOver()== PacketStatu.OVER){
-                    replyConytols.remove(key);
-                    return PacketStatu.OVER;
+                if(control.isSendOver()){
+                    return true;
                 }
-                return control.getSendOver();
             }
-            return PacketStatu.UNKNOW;
+            return false;
         }
     }
 
@@ -163,47 +181,13 @@ public class ByUdpImpl implements ByUdpI{
         }
     }
 
-    @Override
-    public void sendNeedPackates(SendObjectInfo key) {
-        SendObject sendObject;
-        Object control = getParam("senderObjectControl");
-        synchronized (control){
-            sendObject = sendcache.get(key);
-            BasePacket[]  basePackets = sendObject.getPackets();
-            ByLog.log("find send OBJ cache num="+basePackets.length);
-
-            if(sendObject==null){
-                ByLog.err("DO NOT FIND SENDOBJECTS [uuid="+key.getUuid()+"] [id="+key.getId()+"] [type="+key.getType()+"]");
-                return;
-            }
-            if(key.getPacketInfos()==null){
-                ByLog.log("do sendNeedPackets() all num="+basePackets.length);
-                for(int i=0;i<basePackets.length;i++){
-                    sendPacket(basePackets[i]);
-                }
-
-            }else {
-                BasePacketInfo[] infos = key.getPacketInfos();
-                int j = 0;
-                for(int i=0;i<infos.length;i++){
-                    if(infos==null)
-                    {
-                        sendPacket(basePackets[i]);
-                        j++;
-                    }
-                }
-                ByLog.log("do sendNeedPackets() part num="+j);
-            }
-        }
-    }
 
     @Override
-    public void setAndNofifyReplayControl(SendObjectInfo info,int statu) {
+    public void setAndNofifyReplayControl(BasePacketInfo info,boolean sendOver) {
         synchronized (getParam("replyConytol")) {
             ReplyControl control = replyConytols.get(info);
             if(control!=null){
-                control.setSendOver(statu);
-                control.setSendObjectInfo(info);
+                control.setSendOver(true);
                 synchronized (control.getControl()) {
                     control.getControl().notify();
                 }
@@ -213,19 +197,12 @@ public class ByUdpImpl implements ByUdpI{
     }
 
     @Override
-    public void releaseReplyControl(SendObjectInfo key) {
+    public void releaseReplyControl(BasePacketInfo key) {
         synchronized (getParam("replyConytol")) {
             ReplyControl control = replyConytols.remove(key);
         }
     }
 
-    @Override
-    public void releaseSendCachePacks(SendObjectInfo key) {
-            Object control = getParam("senderObjectControl");
-            synchronized (control){
-                sendcache.remove(key);
-            }
-    }
 
     @Override
     public void releaseSendCache() {
@@ -236,7 +213,7 @@ public class ByUdpImpl implements ByUdpI{
                 Map.Entry entry = (Map.Entry) iter.next();
                 SendObject sendObject = (SendObject) entry.getValue();
                 if(sendObject!=null) {
-                    long sendTime = sendObject.getObjinfo()[0].getSendTime().getTime();
+                    long sendTime = sendObject.getPackets()[0].getInfo().getSendTime().getTime();
                     if ((sendTime + 600000) < (new Date().getTime())) {
                         iter.remove();
                     }
@@ -275,7 +252,7 @@ public class ByUdpImpl implements ByUdpI{
             ifok = sendObject.pushPacket(basePacket);
             if(ifok){
                 reObject = sendObject;
-                ByLog.log("receivedObject ready! id="+sendObject.getPackets()[0].getBasePacketData().getId() );
+                ByLog.log("receivedObject ready! id="+sendObject.getInfo().getId());
             }
         }
         return reObject;
@@ -290,4 +267,35 @@ public class ByUdpImpl implements ByUdpI{
         }
     }
 
+    private boolean checkSendPacketStatu(BasePacketInfo basePacketInfo,int i){
+        boolean ifok = checkReplayControl(basePacketInfo);
+        if(ifok){
+            releaseReplyControl(basePacketInfo);
+            ByLog.log("Send OVER");
+            return true;
+        }else{
+            ByLog.log("Send ERROR time="+i);
+            return false;
+        }
+    }
+
+    @Override
+    public void sendCmd(BasePacket basePacket){
+        Object control = new Date();
+        ReplyControl replyControl = new ReplyControl(basePacket.getInfo(),control);
+        pushReplayControl(replyControl);
+        for(int i = 0; i< Statics.SendDefaultTimes; i++) {
+            try {
+                getSocket().send(basePacket.getDatagramPacket());
+                ByLog.log("Sender a Cmd packet! " + i + " times! +type="+DataType.toString(basePacket.getInfo().getType()));
+                ThreadUtil.waits(Statics.TimeSep, replyControl.getControl());
+                if(checkSendPacketStatu(basePacket.getInfo(),i)){
+                    return;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        ByLog.err("SendCmd ERROR, [type="+basePacket.getInfo().getType()+"]");
+    }
 }

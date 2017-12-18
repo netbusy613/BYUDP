@@ -1,13 +1,14 @@
 package com.netbusy.udo.byudp.util;
 
 import com.netbusy.udo.byudp.entity.BasePacketInfo;
+import com.netbusy.udo.byudp.statics.Statics;
 import com.netbusy.util.datautil.DTC;
 
 import java.util.Date;
 
 public class BasePacketInfoUtil {
     public static byte[] toBytes(BasePacketInfo info){
-        byte[] re = new byte[64];
+        byte[] re = new byte[Statics.PacketHeadLen];
         if(info==null){
             return null;
         }
@@ -17,7 +18,7 @@ public class BasePacketInfoUtil {
         pos = DTC.O2BCopy(re,pos,info.getTot());
         pos = DTC.O2BCopy(re,pos,info.getNum());
         pos = DTC.O2BCopy(re,pos,info.getType());
-        pos = DTC.O2BCopy(re,pos,(long)info.getSendTime().getTime());
+        pos = DTC.O2BCopy(re,pos,info.getSendTime().getTime());
         return re;
     }
     public static  BasePacketInfo toObject(byte [] bytes){

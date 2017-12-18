@@ -14,14 +14,6 @@ public class BasePacketInfo implements Serializable{
     public BasePacketInfo() {
     }
 
-    public BasePacketInfo(BasePacketData data) {
-        this.clientId = data.getClientId();
-        this.id  = data.getId();
-        this.tot = data.getTot();
-        this.num = data.getNum();
-        this.type = data.getType();
-        this.sendTime = data.getSendTime();
-    }
 
     public BasePacketInfo(String clientId, long id, int tot, int num, int type) {
         this.clientId = clientId;
@@ -29,6 +21,7 @@ public class BasePacketInfo implements Serializable{
         this.tot = tot;
         this.num = num;
         this.type = type;
+        this.sendTime = new Date();
     }
 
     public String getClientId() {
@@ -105,5 +98,10 @@ public class BasePacketInfo implements Serializable{
         result = 31 * result + num;
         result = 31 * result + type;
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "[clientId="+clientId+"] "+"[id="+id+"] "+"type="+DataType.toString(type)+"] " +"tot="+tot+"] "+"num="+num+"]";
     }
 }

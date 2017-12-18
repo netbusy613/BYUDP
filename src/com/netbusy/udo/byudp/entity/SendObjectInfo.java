@@ -6,16 +6,16 @@ public class SendObjectInfo implements Serializable{
     private String uuid;
     private long id;
     private int type;
-    private BasePacketInfo[] packetInfos;
+    private boolean[] packetStatus;
 
     public SendObjectInfo() {
     }
 
-    public SendObjectInfo(String uuid, long id, int type, BasePacketInfo[] packetInfos) {
+    public SendObjectInfo(String uuid, long id, int type, boolean[] packetStatus) {
         this.uuid = uuid;
         this.id = id;
         this.type = type;
-        this.packetInfos = packetInfos;
+        this.packetStatus = packetStatus;
     }
 
     public SendObjectInfo(String uuid , long id, int type) {
@@ -48,12 +48,20 @@ public class SendObjectInfo implements Serializable{
         this.type = type;
     }
 
-    public BasePacketInfo[] getPacketInfos() {
-        return packetInfos;
+    public boolean[] getPacketStatus() {
+        return packetStatus;
     }
 
-    public void setPacketInfos(BasePacketInfo[] packetInfos) {
-        this.packetInfos = packetInfos;
+    public void setPacketStatus(boolean[] packetStatus) {
+        this.packetStatus = packetStatus;
+    }
+
+    public BasePacketInfo[] grPacketsInfo(){
+        BasePacketInfo[] basePacketInfos = new BasePacketInfo[this.getPacketStatus().length];
+        for(int i=0;i<basePacketInfos.length;i++){
+            basePacketInfos[i]= new BasePacketInfo(uuid,id,basePacketInfos.length,i,type);
+        }
+        return basePacketInfos;
     }
 
     @Override
@@ -74,5 +82,10 @@ public class SendObjectInfo implements Serializable{
         result = 31 * result + (int) (getId() ^ (getId() >>> 32));
         result = 31 * result + getType();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "[uuid="+uuid+"] "+"[id="+id+"] "+"type"+type+"]";
     }
 }

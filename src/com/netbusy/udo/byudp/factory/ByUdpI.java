@@ -13,20 +13,20 @@ public interface ByUdpI {
     DatagramSocket getSocket();
 
     void cacheSendObjects(SendObject sendObject);
+    SendObject findSendCache(SendObjectInfo sendObjectInfo);
+    void cleanSendCache(SendObjectInfo sendObjectInfo);
 
     SendObject pullSendObject();
     void pushSendObject(SendObject sendObject);
 
-    SendObject pullSendPackets();
-    void pushSendPackets(SendObject sendObject);
+    BasePacket pullCmd();
+    void pushCmd(BasePacket basePacket);
 
     void  pushReplayControl(ReplyControl value);
-    int checkReplayControl(SendObjectInfo key);
-    void sendNeedPackates(SendObjectInfo key);
-    void setAndNofifyReplayControl(SendObjectInfo info,int statu);
-    void releaseReplyControl(SendObjectInfo key);
+    boolean checkReplayControl(BasePacketInfo key);
+    void setAndNofifyReplayControl(BasePacketInfo info,boolean sendOver);
+    void releaseReplyControl(BasePacketInfo key);
 
-    void releaseSendCachePacks(SendObjectInfo key);
     void releaseSendCache();
 
     boolean ifReceived(BasePacket basePacket);//cache received and judge if received
@@ -34,4 +34,5 @@ public interface ByUdpI {
     SendObject getReceivedObject(SendObjectInfo info);
 
 
+    void sendCmd(BasePacket basePacket);
 }

@@ -57,26 +57,34 @@ public class PacketUtil {
     }
 
     public static BasePacket SO2BP(String uuid,long id,int tot, int num, int type , InetSocketAddress address,byte[] data){
-        BasePacketData info = new BasePacketData(uuid,id,tot,num,new Date(),type,data);
-        return new BasePacket(address,info);
+        BasePacketInfo info = new BasePacketInfo(uuid,id,tot,num,type);
+        return new BasePacket(address,data,info);
     }
     public static BasePacket grSendOver(InetSocketAddress address,SendObjectInfo info){
-        info.setPacketInfos(null);
+        info.setPacketStatus(null);
         byte[] data = SendObjectInfoUtil.toBytes(info);
         ByLog.log("grSendOver datalen="+data.length);
-        BasePacketData basePacketData = new BasePacketData(ByFactory.getByUdp().clientID(),getId(),1,0,new Date(),DataType.SendOver,data);
-        return new BasePacket(address,basePacketData);
+        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.SendOver);
+        return new BasePacket(address,data,basePacketInfo);
     }
+
+    public static BasePacket grCopy(BasePacket basePacket){
+        byte[] data = BasePacketInfoUtil.toBytes(basePacket.getInfo());
+        ByLog.log("grCopy datalen="+data.length);
+        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.Copy);
+        return new BasePacket(basePacket.getAddress(),data,basePacketInfo);
+    }
+
     public static BasePacket grReceivedAll(InetSocketAddress address,SendObjectInfo info){
-        info.setPacketInfos(null);
+        info.setPacketStatus(null);
         byte[] data = SendObjectInfoUtil.toBytes(info);
-        BasePacketData packetData = new BasePacketData(ByFactory.getByUdp().clientID(),getId(),1,0,new Date(),DataType.Copy,data);
-        return new BasePacket(address,packetData);
+        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.Copy);
+        return new BasePacket(address,data,basePacketInfo);
     }
     public static BasePacket grNeedPackets(InetSocketAddress address,SendObjectInfo info){
         byte[] data = SendObjectInfoUtil.toBytes(info);
-        BasePacketData packetData = new BasePacketData(ByFactory.getByUdp().clientID(),getId(),1,0,new Date(),DataType.NeedPacket,data);
-        return new BasePacket(address,packetData);
+        BasePacketInfo basePacketInfo = new BasePacketInfo(ByFactory.getByUdp().clientID(),getId(),1,0,DataType.NeedPacket);
+        return new BasePacket(address,data,basePacketInfo);
     }
 
 }

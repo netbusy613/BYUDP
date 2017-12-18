@@ -11,8 +11,7 @@ import java.util.Date;
 
 public class Main {
     public static void main(String[] args) {
-        BasePacketData basePacketData = new BasePacketData(ByFactory.getByUdp().clientID(),1,1,1,new Date(), DataType.ReveiveAll,new byte[0]);
-        BasePacketInfo info = new BasePacketInfo(basePacketData);
+        BasePacketInfo info = new BasePacketInfo(ByFactory.getByUdp().clientID(),1,1,1, DataType.ReceivedAll);
         ByLog.log(info.getClientId());
 
         byte[] data = DTC.objectToBytes(info);
@@ -21,8 +20,8 @@ public class Main {
         ByLog.log(data1.length);
         BasePacketInfo info1 = BasePacketInfoUtil.toObject(data1);
         ByLog.log(info1.getClientId());
-        BasePacketInfo[] infos = {info,info,info,info,info,info,info,info,info,info};
-        SendObjectInfo sendObjectInfo = new SendObjectInfo(ByFactory.getByUdp().clientID(),1,DataType.ReveiveAll,infos);
+        boolean[] infos = {true,true,true,true,true,true,true,true,true,false};
+        SendObjectInfo sendObjectInfo = new SendObjectInfo(ByFactory.getByUdp().clientID(),1,DataType.ReceivedAll,infos);
         byte[] bytes = SendObjectInfoUtil.toBytes(sendObjectInfo);
         ByLog.log(bytes.length);
     }

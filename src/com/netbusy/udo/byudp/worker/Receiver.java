@@ -5,6 +5,7 @@ import com.netbusy.udo.byudp.entity.*;
 import com.netbusy.udo.byudp.exception.CRC32CheckException;
 import com.netbusy.udo.byudp.factory.ByUdpI;
 import com.netbusy.udo.byudp.statics.Statics;
+import com.netbusy.udo.byudp.util.BasePacketInfoUtil;
 import com.netbusy.udo.byudp.util.PacketUtil;
 import com.netbusy.udo.byudp.util.ReplyControlUtil;
 import com.netbusy.udo.byudp.util.SendObjectInfoUtil;
@@ -35,24 +36,29 @@ public class Receiver implements Runnable{
             try {
                 byUdpI.getSocket().receive(datagramPacket);
                 BasePacket basePacket = PacketUtil.dp2bp(datagramPacket);
-                BasePacketData info = basePacket.getBasePacketData();
+                BasePacketInfo info = basePacket.getInfo();
                 ByLog.log("Received a packet! [id="+info.getId()+"] [tot="+info.getTot()+"] [num="+info.getNum()+"] [type="+info.getType()+"] [len="+datagramPacket.getLength()+"]");
-                if(!byUdpI.ifReceived(basePacket)) {
-                    switch (info.getType()) {
-                        case DataType.Data:
-                            receivedData(basePacket);
-                            break;
-                        case DataType.SendOver:
-                            receivedSendOver(basePacket);
-                            break;
-                        case DataType.NeedPacket:
-                            receivedNeedPackets(basePacket);
-                            break;
-                        case DataType.Copy:
-                            break;
-                    }
+                if(info.getType()==DataType.Data){
+                    receivedData(basePacket);
                 }else {
-                    ByLog.log(" packet has bean received hashcode="+basePacket.getBasePacketData().hashCode());
+                    sendCopy(basePacket);
+                    if(!byUdpI.ifReceived(basePacket)) {
+                        switch (info.getType()) {
+                            case DataType.SendOver:
+                                byUdpI.pushCmd(basePacket);
+                                break;
+                            case DataType.NeedPacket:
+                                byUdpI.pushCmd(basePacket);
+                                break;
+                            case DataType.Copy:
+                                doCopy(basePacket);
+                                break;
+                            default:
+                                ByLog.log("unknown type packet has bean received "+basePacket.getInfo());
+                                break;
+                        }
+                }
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -65,73 +71,33 @@ public class Receiver implements Runnable{
     }
 
     private void receivedData(BasePacket basePacket){
-        SendObject sendObject = byUdpI.receiveData(basePacket);
-        if(sendObject!=null){
-            ByLog.log("get A Send Object len="+sendObject.getData().length);
-            String msg = new String(sendObject.getData(), Charset.forName("UTF-8"));
-            ByLog.log(msg);
+        if(!byUdpI.ifReceived(basePacket)){
+            SendObject sendObject = byUdpI.receiveData(basePacket);
+            if(sendObject!=null){
+                ByLog.log("get A Send Object len="+sendObject.getData().length);
+                String msg = new String(sendObject.getData(), Charset.forName("UTF-8"));
+                ByLog.log(msg);
+            }
         }
     }
-    private void receivedSendOver(BasePacket basePacket){
-        byte[] dat = basePacket.getBasePacketData().getData();
-        SendObjectInfo info = SendObjectInfoUtil.toObject(dat);
-        ByLog.log("received a sendOver packet! oid="+info.getId());
-        SendObject sendObject = byUdpI.getReceivedObject(info);
-        if(sendObject!=null){
-            boolean checkOver = checkSendOver(sendObject.getObjinfo());
-            if(checkOver){
-                BasePacket receivedAll = PacketUtil.grReceivedAll(basePacket.getAddress(),sendObject.getInfo());
-                try {
-                    byUdpI.getSocket().send(receivedAll.getDatagramPacket());
-                    ByLog.log("send a ReceivedAll pachet! replyControl1 id ="+sendObject.getInfo().getId());
-                }catch (IOException ex){
-                    ex.printStackTrace();
-                }
-            }else {
-                BasePacket needed = PacketUtil.grNeedPackets(basePacket.getAddress(),sendObject.getInfo());
-                try {
-                    byUdpI.getSocket().send(needed.getDatagramPacket());
-                    ByLog.err("Need packets id="+info.getId());
-                }catch (IOException ex){
-                    ex.printStackTrace();
-                }
-            }
-        }else {
-            ByLog.log("sendObject === null");
-            BasePacket needed = PacketUtil.grNeedPackets(basePacket.getAddress(),info);
-            try {
-                byUdpI.getSocket().send(needed.getDatagramPacket());
-                ByLog.err("Need ALL packets id="+info.getId());
-            }catch (IOException ex){
-                ex.printStackTrace();
-            }
-        }
 
-    }
+
+
 
     private void doCopy(BasePacket basePacket){
-        SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
-        ByLog.log("do Copy!");
-        byUdpI.setAndNofifyReplayControl(key,PacketStatu.OVER);
+        BasePacketInfo key = BasePacketInfoUtil.toObject(basePacket.getBasePacketData());
+        ByLog.log("do Copy! "+basePacket.getInfo());
+        byUdpI.setAndNofifyReplayControl(key,true);
     }
-
-    private void receivedReceivedAll(BasePacket basePacket){
-        SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
-        ByLog.log("do receivedALLPackets!");
-        byUdpI.setAndNofifyReplayControl(key,PacketStatu.OVER);
-    }
-
-    private void receivedNeedPackets(BasePacket basePacket){
-        ByLog.log("do receivedNeedPackets");
-        SendObjectInfo key = SendObjectInfoUtil.toObject(basePacket.getBasePacketData().getData());
-        //byUdpI.setAndNofifyReplayControl(key,PacketStatu.NEED);
-    }
-
-    private boolean checkSendOver(BasePacketInfo[] infos){
-        for (BasePacketInfo info:infos){
-            if(info==null)
-                return false;
+    private void sendCopy(BasePacket basePacket){
+        BasePacket copy = PacketUtil.grCopy(basePacket);
+        try {
+            byUdpI.getSocket().send(copy.getDatagramPacket());
+            ByLog.log("send Copy! "+basePacket.getInfo());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return true;
     }
+
+
 }
