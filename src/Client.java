@@ -37,7 +37,7 @@ public class Client {
 ////                ThreadUtil.waits(1,new Date());
 //            }
             String bhy ="上帝发誓打死了看见分厘卡时间浪费就打算离开酱豆腐立刻机阿里山的回复了哈老师就好的飞机哈四大皆空发哈伦裤还是独立开发哈咯看是否加啊四了货到付款就好阿拉山口地方皇家卡森货到付款撒谎发来看哈时空复活啊阿斯顿发贺卡是的接口煞费了好大就开始打飞机啊是快点放假哈上了飞机哈是开放阿三";
-            for(int i = 0;i<1;i++){
+            for(int i = 0;i<100;i++){
                 byte [] sed = (i+bhy).getBytes(Charset.forName("UTF-8"));
                 socket.send(sed,address);
 //                ThreadUtil.waits(100,new Date());

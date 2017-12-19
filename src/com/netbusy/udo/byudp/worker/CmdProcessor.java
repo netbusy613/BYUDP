@@ -56,7 +56,6 @@ public class CmdProcessor implements Runnable{
         if(sendObject==null){
             cmdpacket = PacketUtil.grNeedPackets(basePacket.getAddress(),sendObjectInfo);
             ByLog.err("doSendOver Error do Not find Obj id="+sendObjectInfo.getId());
-            return;
         }else {
             if(checkOver(sendObject.getInfo().getPacketStatus())){
                 cmdpacket = PacketUtil.grReceivedAll(basePacket.getAddress(),sendObjectInfo);
