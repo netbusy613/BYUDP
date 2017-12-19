@@ -86,6 +86,6 @@ public class SendObjectInfo implements Serializable{
 
     @Override
     public String toString() {
-        return "[uuid="+uuid+"] "+"[id="+id+"] "+"type"+type+"]";
+        return "[uuid="+uuid+"] "+"[id="+id+"] "+"type=["+DataType.toString(type)+"]";
     }
 }

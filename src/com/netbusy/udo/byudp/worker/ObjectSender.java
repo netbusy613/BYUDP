@@ -45,13 +45,18 @@ public class ObjectSender implements Runnable{
         BasePacket[] packets = sendObject.getPackets();
         boolean[] packetstatus = sendObject.getInfo().getPacketStatus();
         try {
-            for(int i=0;i<packets.length;i++){
-                if(!packetstatus[i]){
+            if (packetstatus==null){
+                packetstatus = new boolean[packets.length];
+            }
+
+            for (int i = 0; i < packets.length; i++) {
+                if (!packetstatus[i]) {
                     byUdpI.getSocket().send(packets[i].getDatagramPacket());
                     BasePacketInfo info = packets[i].getInfo();
                     ByLog.log("ObjectSender a packet![id:" + info.getId() + "] [tot:" + info.getTot() + "] [num:" + info.getNum() + "]");
                 }
             }
+
             byUdpI.cacheSendObjects(sendObject);
         } catch (IOException ex) {
             ex.printStackTrace();
