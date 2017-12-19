@@ -37,28 +37,20 @@ public class Receiver implements Runnable{
                 byUdpI.getSocket().receive(datagramPacket);
                 BasePacket basePacket = PacketUtil.dp2bp(datagramPacket);
                 BasePacketInfo info = basePacket.getInfo();
-                ByLog.log("Received a packet! [id="+info.getId()+"] [tot="+info.getTot()+"] [num="+info.getNum()+"] [type="+info.getType()+"] [len="+datagramPacket.getLength()+"]");
-                if(info.getType()==DataType.Data){
-                    receivedData(basePacket);
-                }else {
-                    sendCopy(basePacket);
-                    if(!byUdpI.ifReceived(basePacket)) {
-                        switch (info.getType()) {
-                            case DataType.SendOver:
-                                byUdpI.pushCmd(basePacket);
-                                break;
-                            case DataType.NeedPacket:
-                                byUdpI.pushCmd(basePacket);
-                                break;
-                            case DataType.Copy:
-                                doCopy(basePacket);
-                                break;
-                            default:
-                                ByLog.log("unknown type packet has bean received "+basePacket.getInfo());
-                                break;
+                ByLog.log("Received a packet! {"+info+"}");
+                switch (info.getType()){
+                    case DataType.Data:
+                        receivedData(basePacket);
+                        break;
+                        case DataType.Copy:
+                            doCopy(basePacket);
+                            break;
+                    default:
+                        sendCopy(basePacket);
+                        if(!byUdpI.ifReceived(basePacket)) {
+                            byUdpI.pushCmd(basePacket);
                         }
-                }
-
+                        break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();

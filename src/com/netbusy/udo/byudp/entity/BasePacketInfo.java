@@ -102,6 +102,6 @@ public class BasePacketInfo implements Serializable{
 
     @Override
     public String toString() {
-        return "[clientId="+clientId+"] "+"[id="+id+"] "+"type="+DataType.toString(type)+"] " +"tot="+tot+"] "+"num="+num+"]";
+        return "[clientId="+clientId+"] "+"[id="+id+"] "+"type=["+DataType.toString(type)+"] " +"tot=["+tot+"] "+"num=["+num+"]";
     }
 }

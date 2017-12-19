@@ -38,7 +38,7 @@ public class CmdProcessor implements Runnable{
                         doReceivedAll(cmdpacket);
                         break;
                     default:
-                        ByLog.err("KNOWN CMD.......");
+                        ByLog.err("UNKNOWN CMD.......");
                         break;
                 }
             }else {
