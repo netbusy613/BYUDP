@@ -35,4 +35,5 @@ public interface ByUdpI {
 
 
     void sendCmd(BasePacket basePacket);
+    void sendObject(SendObject sendObject);
 }

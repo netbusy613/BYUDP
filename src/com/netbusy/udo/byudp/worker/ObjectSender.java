@@ -31,7 +31,7 @@ public class ObjectSender implements Runnable{
         while (runing){
             SendObject sendObject = byUdpI.pullSendObject();
             if(sendObject!=null){
-                sendObject(sendObject);
+                byUdpI.sendObject(sendObject);
                 sendOver(sendObject);
             }else {
                 ByLog.log("No Object to send.");
@@ -41,27 +41,6 @@ public class ObjectSender implements Runnable{
         ByLog.log("ObjectSender daed!.......");
     }
 
-    private void sendObject(SendObject sendObject){
-        BasePacket[] packets = sendObject.getPackets();
-        boolean[] packetstatus = sendObject.getInfo().getPacketStatus();
-        try {
-            if (packetstatus==null){
-                packetstatus = new boolean[packets.length];
-            }
-
-            for (int i = 0; i < packets.length; i++) {
-                if (!packetstatus[i]) {
-                    byUdpI.getSocket().send(packets[i].getDatagramPacket());
-                    BasePacketInfo info = packets[i].getInfo();
-                    ByLog.log("ObjectSender a packet![id:" + info.getId() + "] [tot:" + info.getTot() + "] [num:" + info.getNum() + "]");
-                }
-            }
-
-            byUdpI.cacheSendObjects(sendObject);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
 
     private void sendOver(SendObject sendObject){
         Object recontrol = new Date();

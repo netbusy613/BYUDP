@@ -298,4 +298,32 @@ public class ByUdpImpl implements ByUdpI{
         }
         ByLog.err("SendCmd ERROR, [type="+basePacket.getInfo().getType()+"]");
     }
+
+    @Override
+    public void sendObject(SendObject sendObject) {
+        BasePacket[] packets = sendObject.getPackets();
+        boolean[] packetstatus = sendObject.getInfo().getPacketStatus();
+        try {
+            if (packetstatus==null){
+                packetstatus = new boolean[packets.length];
+            }
+            Object object = new Date();
+            int j = 0;
+            for (int i = 0; i < packets.length; i++) {
+                if (!packetstatus[i]) {
+                    getSocket().send(packets[i].getDatagramPacket());
+                    BasePacketInfo info = packets[i].getInfo();
+                    ByLog.log("ObjectSender a packet![id:" + info.getId() + "] [tot:" + info.getTot() + "] [num:" + info.getNum() + "]");
+                    j++;
+                    if(j>Statics.sendMaxs) {
+                        ThreadUtil.wait(1, object);
+                        j=0;
+                    }
+                }
+            }
+            cacheSendObjects(sendObject);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 }
