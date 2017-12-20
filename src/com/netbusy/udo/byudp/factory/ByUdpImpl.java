@@ -353,7 +353,7 @@ public class ByUdpImpl implements ByUdpI{
                     ByLog.log("ObjectSender a packet![id:" + info.getId() + "] [tot:" + info.getTot() + "] [num:" + info.getNum() + "]");
                     j++;
                     if(j>Statics.sendMaxs) {
-                        ThreadUtil.wait(1, object);
+                        ThreadUtil.wait(Statics.waitTime, object);
                         j=0;
                     }
                 }
