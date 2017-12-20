@@ -18,6 +18,8 @@ public interface ByUdpI {
 
     SendObject pullSendObject();
     void pushSendObject(SendObject sendObject);
+    SendObject pullReSendObject();
+    void pushReSendObject(SendObject sendObject);
 
     BasePacket pullCmd();
     void pushCmd(BasePacket basePacket);
@@ -32,6 +34,9 @@ public interface ByUdpI {
     boolean ifReceived(BasePacket basePacket);//cache received and judge if received
     SendObject receiveData(BasePacket basePacket);
     SendObject getReceivedObject(SendObjectInfo info);
+
+    void pushReceivePacket(BasePacket basePacket);
+    BasePacket pullReceivePacket();
 
 
     void sendCmd(BasePacket basePacket);

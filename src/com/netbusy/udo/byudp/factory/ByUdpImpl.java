@@ -3,9 +3,7 @@ package com.netbusy.udo.byudp.factory;
 import com.netbusy.log.ByLog;
 import com.netbusy.udo.byudp.entity.*;
 import com.netbusy.udo.byudp.statics.Statics;
-import com.netbusy.udo.byudp.worker.CmdProcessor;
-import com.netbusy.udo.byudp.worker.ObjectSender;
-import com.netbusy.udo.byudp.worker.Receiver;
+import com.netbusy.udo.byudp.worker.*;
 import com.netbusy.util.threadutil.ThreadUtil;
 
 import java.io.IOException;
@@ -19,6 +17,8 @@ public class ByUdpImpl implements ByUdpI{
 
     private HashMap<String,Object> params = new HashMap<String, Object>();
     private ArrayList<SendObject> sendObjects = new ArrayList<SendObject>();
+    private ArrayList<SendObject> resendObjects = new ArrayList<SendObject>();
+    private ArrayList<BasePacket> receiveList = new ArrayList<BasePacket>();
     private ArrayList<BasePacket> cmdList = new ArrayList<BasePacket>();
 
     private HashMap<BasePacketInfo,ReplyControl> replyControls = new HashMap<BasePacketInfo, ReplyControl>();
@@ -53,19 +53,26 @@ public class ByUdpImpl implements ByUdpI{
 
         Object receiveControl = new Date();
         Object senderObjectControl = new Date();
+        Object reSenderControl = new Date();
         Object cmdControl = new Date();
+        Object dataControl = new Date();
         Object sendCacheControl = new Date();
         Object replyControl = new Date();
 
         setParam("receiveControl",receiveControl);
         setParam("senderObjectControl",senderObjectControl);
+        setParam("reSenderControl",reSenderControl);
         setParam("cmdControl",cmdControl);
+        setParam("dataControl",dataControl);
         setParam("sendCacheControl",sendCacheControl);
         setParam("replyControl",replyControl);
 
-        ThreadUtil.CreatThread(new Receiver(getParam("receiveControl"),this)).start();
+        ThreadUtil.CreatThread(new Receiver(this)).start();
         ThreadUtil.CreatThread(new ObjectSender(getParam("senderObjectControl"),this)).start();
+        ThreadUtil.CreatThread(new ObjectReSender(getParam("reSenderControl"),this)).start();
         ThreadUtil.CreatThread(new CmdProcessor(getParam("cmdControl"),this)).start();
+        ThreadUtil.CreatThread(new ReceivePacketProcessor(getParam("dataControl"),this)).start();
+
     }
 
     @Override
@@ -131,6 +138,26 @@ public class ByUdpImpl implements ByUdpI{
     }
 
     @Override
+    public SendObject pullReSendObject() {
+        SendObject sendObject = null;
+        synchronized (getParam("reSenderControl")){
+            if(!resendObjects.isEmpty()) {
+                sendObject = resendObjects.remove(0);
+            }
+        }
+        return sendObject;
+    }
+
+    @Override
+    public void pushReSendObject(SendObject sendObject) {
+        Object control = getParam("reSenderControl");
+        synchronized (control){
+            resendObjects.add(sendObject);
+            control.notify();
+        }
+    }
+
+    @Override
     public BasePacket pullCmd() {
         BasePacket basePacket = null;
         synchronized (getParam("cmdControl")){
@@ -170,16 +197,6 @@ public class ByUdpImpl implements ByUdpI{
             return false;
         }
     }
-
-//    private void sendPacket(BasePacket basePacket){
-//        try {
-//            socket.send(basePacket.getDatagramPacket());
-//            BasePacketInfo packet = basePacket.getInfo();
-//            ByLog.log("send packets [id:" + packet.getId() + "] [tot:" + packet.getTot() + "] [num:" + packet.getNum() + "]");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
 
     @Override
@@ -225,14 +242,14 @@ public class ByUdpImpl implements ByUdpI{
     @Override
     public boolean ifReceived(BasePacket basePacket) {
         Object control = getParam("receiveControl");
-        BasePacket bp = receivedcache.get(basePacket.getInfo());
         synchronized (control){
+            BasePacket bp = receivedcache.get(basePacket.getInfo());
             if(bp!=null){
-                ByLog.log("重复 receivedpacket hashcode="+basePacket.getBasePacketData().hashCode());
+                ByLog.log("重复 receivedpacket ="+basePacket.getInfo());
                 return true;
             }
             receivedcache.put(basePacket.getInfo(),basePacket);
-            ByLog.log("cache receivedpacket hashcode="+basePacket.getBasePacketData().hashCode());
+            ByLog.log("cache receivedpacket ="+basePacket.getInfo());
             return false;
         }
     }
@@ -264,6 +281,26 @@ public class ByUdpImpl implements ByUdpI{
             ByLog.log("getReceivedObject id="+info.getId());
             SendObject sendObject =  receivedObj.get(info);
             return sendObject;
+        }
+    }
+
+    @Override
+    public void pushReceivePacket(BasePacket basePacket) {
+        Object control = getParam("dataControl");
+        synchronized (control){
+            receiveList.add(basePacket);
+            control.notify();
+        }
+    }
+
+    @Override
+    public BasePacket pullReceivePacket() {
+        synchronized (getParam("dataControl")){
+            BasePacket basePacket = null;
+            if(!receiveList.isEmpty()) {
+                basePacket = receiveList.remove(0);
+            }
+            return basePacket;
         }
     }
 

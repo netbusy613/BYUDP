@@ -2,17 +2,17 @@ package com.netbusy.udo.byudp.worker;
 
 
 import com.netbusy.log.ByLog;
-import com.netbusy.udo.byudp.entity.*;
+import com.netbusy.udo.byudp.entity.BasePacket;
+import com.netbusy.udo.byudp.entity.SendObject;
 import com.netbusy.udo.byudp.factory.ByUdpI;
-import com.netbusy.udo.byudp.statics.Statics;
 import com.netbusy.udo.byudp.util.PacketUtil;
 import com.netbusy.util.threadutil.ThreadUtil;
-import java.io.IOException;
+
 import java.util.Date;
 
-public class ObjectSender implements Runnable{
+public class ObjectReSender implements Runnable{
 
-    public ObjectSender(Object control, ByUdpI byUdpI) {
+    public ObjectReSender(Object control, ByUdpI byUdpI) {
         this.control = control;
         this.byUdpI = byUdpI;
     }
@@ -27,18 +27,18 @@ public class ObjectSender implements Runnable{
     }
     @Override
     public void run() {
-        ByLog.log("ObjectSender runing.......");
+        ByLog.log("ObjectReSender runing.......");
         while (runing){
-            SendObject sendObject = byUdpI.pullSendObject();
+            SendObject sendObject = byUdpI.pullReSendObject();
             if(sendObject!=null){
                 byUdpI.sendObject(sendObject);
                 sendOver(sendObject);
             }else {
-                ByLog.log("No Object to send.");
+                ByLog.log("No ReObject to send.");
                 ThreadUtil.waits(control);
             }
         }
-        ByLog.log("ObjectSender daed!.......");
+        ByLog.log("ObjectReSender daed!.......");
     }
 
 

@@ -29,6 +29,7 @@ public class CmdProcessor implements Runnable{
         while (runing){
             BasePacket cmdpacket = byUdpI.pullCmd();
             if(cmdpacket!=null){
+                ByLog.log("CmdProcessor doing.......");
                 switch (cmdpacket.getInfo().getType()){
                     case DataType.SendOver:
                         doSendOver(cmdpacket);
@@ -75,7 +76,7 @@ public class CmdProcessor implements Runnable{
         SendObject sendObject = byUdpI.findSendCache(sendObjectInfo);
         //setSendMax(sendObjectInfo,sendObject.getInfo());
         sendObject.setInfo(sendObjectInfo);
-        byUdpI.pushSendObject(sendObject);
+        byUdpI.pushReSendObject(sendObject);
         ByLog.err("doNeedPackets "+sendObjectInfo);
     }
 

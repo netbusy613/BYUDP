@@ -12,17 +12,15 @@ import com.netbusy.udo.byudp.util.PacketUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.nio.charset.Charset;
 
 public class Receiver implements Runnable{
 
-    public Receiver(Object control,ByUdpI byUdpI) {
-        this.control = control;
+    public Receiver(
+            ByUdpI byUdpI) {
         this.byUdpI = byUdpI;
     }
 
     private boolean runing = true;
-    private  Object control;
     private ByUdpI byUdpI;
     @Override
     public void run() {
@@ -34,20 +32,24 @@ public class Receiver implements Runnable{
                 byUdpI.getSocket().receive(datagramPacket);
                 BasePacket basePacket = PacketUtil.dp2bp(datagramPacket);
                 BasePacketInfo info = basePacket.getInfo();
-                ByLog.log("Received a packet! {"+info+"}");
                 switch (info.getType()){
                     case DataType.Data:
-                        receivedData(basePacket);
-                        break;
-                        case DataType.Copy:
-                            doCopy(basePacket);
-                            break;
-                    default:
-                        sendCopy(basePacket);
                         if(!byUdpI.ifReceived(basePacket)) {
-                            byUdpI.pushCmd(basePacket);
+                            byUdpI.pushReceivePacket(basePacket);
+                            ByLog.log("Received a Data packet! {"+info+"}");
                         }
                         break;
+                    case DataType.Copy:
+                        ByLog.log("Received a Copy packet! {"+info+"}");
+                        doCopy(basePacket);
+                        break;
+                    default:
+                        ByLog.log("Received a CMD packet! {"+info+"}");
+                        sendCopy(basePacket);
+                        if(!byUdpI.ifReceived(basePacket)) {
+                            byUdpI.pushReceivePacket(basePacket);
+                        }
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -59,16 +61,7 @@ public class Receiver implements Runnable{
         ByLog.log("Receiver dead!");
     }
 
-    private void receivedData(BasePacket basePacket){
-        if(!byUdpI.ifReceived(basePacket)){
-            SendObject sendObject = byUdpI.receiveData(basePacket);
-            if(sendObject!=null){
-                ByLog.log("get A Send Object len="+sendObject.getData().length);
-                String msg = new String(sendObject.getData(), Charset.forName("UTF-8"));
-                ByLog.log(msg);
-            }
-        }
-    }
+
 
 
 
