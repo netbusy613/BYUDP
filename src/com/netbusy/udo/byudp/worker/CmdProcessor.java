@@ -74,52 +74,19 @@ public class CmdProcessor implements Runnable{
     private void doNeedPackets(BasePacket basePacket){
         SendObjectInfo sendObjectInfo = SendObjectInfoUtil.toObject(basePacket.getBasePacketData());
         SendObject sendObject = byUdpI.findSendCache(sendObjectInfo);
-        //setSendMax(sendObjectInfo,sendObject.getInfo());
+        setSendMax(sendObjectInfo);
         sendObject.setInfo(sendObjectInfo);
         byUdpI.pushReSendObject(sendObject);
         ByLog.err("doNeedPackets "+sendObjectInfo);
     }
 
 
-    private void setSendMax(SendObjectInfo receivedInfo, SendObjectInfo sendInfo){
+    private void setSendMax(SendObjectInfo receivedInfo){
         boolean[] Rstatus = receivedInfo.getPacketStatus();
-        boolean[] Sstatus = sendInfo.getPacketStatus();
-        int temp =1;
-        if(Sstatus!=null) {
             if (Rstatus != null) {
-                int i = 0,j=0;
-                for (boolean st : Rstatus) {
-                    if (!st)
-                        i++;
-                }
-                for (boolean st : Sstatus) {
-                    if (!st)
-                        j++;
-                }
-                temp = ((int) Math.floor(i/j)) * Statics.sendMaxs / 100;
-                if (temp > 1) {
-                    Statics.sendMaxs = temp;
-                } else {
-                    Statics.sendMaxs = 1;
-                }
-                ByLog.err("SET SEND MAX = " + Statics.sendMaxs);
+                Statics.waitTime ++;
             }
-        }else {
-            if (Rstatus != null) {
-                int i = 0;
-                for (boolean st : Rstatus) {
-                    if (!st)
-                        i++;
-                }
-                temp = ((int) Math.floor(100 * i / Rstatus.length)) * Statics.sendMaxs / 100;
-            }
-        }
-        if (temp > 1) {
-            Statics.sendMaxs = temp;
-        } else {
-            Statics.sendMaxs = 1;
-        }
-        ByLog.err("SET SEND MAX = " + Statics.sendMaxs);
+        ByLog.err("SET waitTime = " + Statics.waitTime);
     }
 
     private void doReceivedAll(BasePacket basePacket){

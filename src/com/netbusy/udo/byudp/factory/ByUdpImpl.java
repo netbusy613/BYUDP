@@ -1,5 +1,6 @@
 package com.netbusy.udo.byudp.factory;
 
+import com.netbusy.cache.CachedMap2;
 import com.netbusy.log.ByLog;
 import com.netbusy.udo.byudp.entity.*;
 import com.netbusy.udo.byudp.statics.Statics;
@@ -25,7 +26,7 @@ public class ByUdpImpl implements ByUdpI{
 
 
     private HashMap<SendObjectInfo,SendObject> sendcache = new HashMap<SendObjectInfo,SendObject>();
-    private HashMap<BasePacketInfo,BasePacket> receivedcache = new HashMap<BasePacketInfo,BasePacket>();
+    private CachedMap2<BasePacketInfo,BasePacket> receivedcache = new CachedMap2<BasePacketInfo,BasePacket>();
 
     private HashMap<SendObjectInfo,SendObject> receivedObj = new HashMap<SendObjectInfo, SendObject>();
 

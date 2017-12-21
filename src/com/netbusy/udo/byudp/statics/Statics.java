@@ -7,7 +7,7 @@ public class Statics {
     public static final int PacketDataLen = 484;
     public static final int TimeSep = 3000;
     public static final int SendDefaultTimes = 5;
-    public static int sendMaxs = 9;
-    public static int waitTime = 8;
+    public static int sendMaxs = 100;
+    public static int waitTime = 87;
 
 }
