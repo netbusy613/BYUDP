@@ -26,10 +26,10 @@ public class ByUdpImpl implements ByUdpI{
     private HashMap<BasePacketInfo,ReplyControl> replyControls = new HashMap<BasePacketInfo, ReplyControl>();
 
 
-    private CachedMap2<SendObjectInfo,SendObject> sendcache = new CachedMap2<SendObjectInfo,SendObject>();
+    private CachedMap2<SendObjectInfo,SendObject> sendcache = new CachedMap2<SendObjectInfo,SendObject>(50);
     private CachedMap2<BasePacketInfo,BasePacket> receivedcache = new CachedMap2<BasePacketInfo,BasePacket>();
 
-    private CachedMap2<SendObjectInfo,SendObject> receivedObj = new CachedMap2<SendObjectInfo, SendObject>();
+    private CachedMap2<SendObjectInfo,SendObject> receivedObj = new CachedMap2<SendObjectInfo, SendObject>(50);
 
     private DatagramSocket socket;
 
