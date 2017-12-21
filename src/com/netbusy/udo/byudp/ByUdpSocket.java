@@ -30,4 +30,8 @@ public class ByUdpSocket { ;
         SendObject sendObject = new SendObject(DataType.Data,bytes,address);
         ByFactory.getByUdp().pushSendObject(sendObject);
     }
+
+    public SendObject receive(){
+        return ByFactory.getByUdp().pullReceivedObject();
+    }
 }

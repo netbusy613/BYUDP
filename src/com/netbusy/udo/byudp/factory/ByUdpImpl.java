@@ -259,7 +259,8 @@ public class ByUdpImpl implements ByUdpI{
     public SendObject receiveData(BasePacket basePacket) {
         SendObject reObject = null;
         boolean ifok = false;
-        synchronized (getParam("receiveControl")){
+        Object control = getParam("receiveControl");
+        synchronized (control){
             SendObjectInfo info= basePacket.getInfo().getSendObjectInfo();
             SendObject sendObject =  receivedObj.get(info);
             if(sendObject==null){
@@ -270,6 +271,7 @@ public class ByUdpImpl implements ByUdpI{
             ifok = sendObject.pushPacket(basePacket);
             if(ifok){
                 reObject = sendObject;
+                control.notify();
                 ByLog.log("receivedObject ready! id="+sendObject.getInfo().getId());
             }
         }
@@ -282,6 +284,24 @@ public class ByUdpImpl implements ByUdpI{
             ByLog.log("getReceivedObject id="+info.getId());
             SendObject sendObject =  receivedObj.get(info);
             return sendObject;
+        }
+    }
+
+    @Override
+    public SendObject pullReceivedObject() {
+        Object control = getParam("receiveControl");
+        SendObject sendObject= null;
+        while (true) {
+            synchronized (control) {
+                if (!receivedObj.isEmpty()) {
+                    sendObject = receivedObj.remove(0);
+                }
+            }
+            if (sendObject != null){
+                return sendObject;
+            }else {
+                ThreadUtil.waits(control);
+            }
         }
     }
 

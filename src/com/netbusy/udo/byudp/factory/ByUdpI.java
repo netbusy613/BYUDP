@@ -34,6 +34,7 @@ public interface ByUdpI {
     boolean ifReceived(BasePacket basePacket);//cache received and judge if received
     SendObject receiveData(BasePacket basePacket);
     SendObject getReceivedObject(SendObjectInfo info);
+    SendObject pullReceivedObject();
 
     void pushReceivePacket(BasePacket basePacket);
     BasePacket pullReceivePacket();

@@ -19,7 +19,7 @@ public class Client {
             ThreadUtil.waits(3000,new Date());
             InetAddress addr = null;
             try {
-                addr = InetAddress.getByName("192.168.100.104");
+                addr = InetAddress.getByName("192.168.100.100");
 //                addr = InetAddress.getByName("127.0.0.1");
             } catch (UnknownHostException e) {
                 e.printStackTrace();
