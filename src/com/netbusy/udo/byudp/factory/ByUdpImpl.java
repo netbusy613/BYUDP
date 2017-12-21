@@ -223,7 +223,7 @@ public class ByUdpImpl implements ByUdpI{
             ReplyControl control = replyControls.remove(key);
         }
     }
-    
+
 
     @Override
     public boolean ifReceived(BasePacket basePacket) {
