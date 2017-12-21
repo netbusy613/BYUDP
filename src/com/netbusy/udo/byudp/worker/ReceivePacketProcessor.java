@@ -49,8 +49,6 @@ public class ReceivePacketProcessor implements Runnable{
         SendObject sendObject = byUdpI.receiveData(basePacket);
         if(sendObject!=null){
             ByLog.log("get A Send Object len="+sendObject.getData().length);
-            String msg = new String(sendObject.getData(), Charset.forName("UTF-8"));
-            ByLog.log(msg);
         }
     }
 
