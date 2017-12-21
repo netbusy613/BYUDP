@@ -29,8 +29,6 @@ public interface ByUdpI {
     void setAndNofifyReplayControl(BasePacketInfo info,boolean sendOver);
     void releaseReplyControl(BasePacketInfo key);
 
-    void releaseSendCache();
-
     boolean ifReceived(BasePacket basePacket);//cache received and judge if received
     SendObject receiveData(BasePacket basePacket);
     SendObject getReceivedObject(SendObjectInfo info);

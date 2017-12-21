@@ -20,15 +20,16 @@ public class ByUdpImpl implements ByUdpI{
     private ArrayList<SendObject> sendObjects = new ArrayList<SendObject>();
     private ArrayList<SendObject> resendObjects = new ArrayList<SendObject>();
     private ArrayList<BasePacket> receiveList = new ArrayList<BasePacket>();
+    private ArrayList<SendObject> readObj = new ArrayList<SendObject>();
     private ArrayList<BasePacket> cmdList = new ArrayList<BasePacket>();
 
     private HashMap<BasePacketInfo,ReplyControl> replyControls = new HashMap<BasePacketInfo, ReplyControl>();
 
 
-    private HashMap<SendObjectInfo,SendObject> sendcache = new HashMap<SendObjectInfo,SendObject>();
+    private CachedMap2<SendObjectInfo,SendObject> sendcache = new CachedMap2<SendObjectInfo,SendObject>();
     private CachedMap2<BasePacketInfo,BasePacket> receivedcache = new CachedMap2<BasePacketInfo,BasePacket>();
 
-    private HashMap<SendObjectInfo,SendObject> receivedObj = new HashMap<SendObjectInfo, SendObject>();
+    private CachedMap2<SendObjectInfo,SendObject> receivedObj = new CachedMap2<SendObjectInfo, SendObject>();
 
     private DatagramSocket socket;
 
@@ -57,6 +58,7 @@ public class ByUdpImpl implements ByUdpI{
         Object reSenderControl = new Date();
         Object cmdControl = new Date();
         Object dataControl = new Date();
+        Object dataReadyControl = new Date();
         Object sendCacheControl = new Date();
         Object replyControl = new Date();
 
@@ -65,6 +67,7 @@ public class ByUdpImpl implements ByUdpI{
         setParam("reSenderControl",reSenderControl);
         setParam("cmdControl",cmdControl);
         setParam("dataControl",dataControl);
+        setParam("dataReadyControl",dataReadyControl);
         setParam("sendCacheControl",sendCacheControl);
         setParam("replyControl",replyControl);
 
@@ -220,25 +223,7 @@ public class ByUdpImpl implements ByUdpI{
             ReplyControl control = replyControls.remove(key);
         }
     }
-
-
-    @Override
-    public void releaseSendCache() {
-        Object control = getParam("senderObjectControl");
-        synchronized (control) {
-            Iterator iter = sendcache.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                SendObject sendObject = (SendObject) entry.getValue();
-                if(sendObject!=null) {
-                    long sendTime = sendObject.getPackets()[0].getInfo().getSendTime().getTime();
-                    if ((sendTime + 600000) < (new Date().getTime())) {
-                        iter.remove();
-                    }
-                }
-            }
-        }
-    }
+    
 
     @Override
     public boolean ifReceived(BasePacket basePacket) {
@@ -271,7 +256,11 @@ public class ByUdpImpl implements ByUdpI{
             ifok = sendObject.pushPacket(basePacket);
             if(ifok){
                 reObject = sendObject;
-                control.notify();
+                Object readyControl = getParam("dataReadyControl");
+                synchronized (readyControl) {
+                    readObj.add(sendObject);
+                    readyControl.notify();
+                }
                 ByLog.log("receivedObject ready! id="+sendObject.getInfo().getId());
             }
         }
@@ -289,12 +278,12 @@ public class ByUdpImpl implements ByUdpI{
 
     @Override
     public SendObject pullReceivedObject() {
-        Object control = getParam("receiveControl");
+        Object control = getParam("dataReadyControl");
         SendObject sendObject= null;
         while (true) {
             synchronized (control) {
-                if (!receivedObj.isEmpty()) {
-                    sendObject = receivedObj.remove(0);
+                if (!readObj.isEmpty()) {
+                    sendObject = readObj.remove(0);
                 }
             }
             if (sendObject != null){
